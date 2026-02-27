@@ -7,6 +7,14 @@
       "image": "files/images/profile.jpg",
       "button1_value": "https://github.com/Fr4ncisTaylor",
       "button2_value": "https://instagram.com/slash.baiano"
+    },
+    {
+      "name": "",
+      "username": "",
+      "bio": "",
+      "image": "files/images/you_profile_pic.jpg",
+      "button1_value": "git",
+      "button2_value": "insta"
     }
   ]
 }
