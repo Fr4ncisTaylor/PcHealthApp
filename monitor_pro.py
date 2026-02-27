@@ -14,13 +14,9 @@ from pprint import pprint
 import config as config_file
 from collections import deque
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QPainter, QColor, QPen
-from PyQt6.QtWidgets import (
-	QTableWidget, QTableWidgetItem,
-	QApplication, QWidget, QVBoxLayout, QGridLayout,
-	QLabel, QTabWidget, QGroupBox, QPushButton, QFileDialog, 
-	QComboBox, QFrame,QListWidget, QListWidgetItem, QHBoxLayout )
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
 
 # IF NVIDIA AVALIABLE
 try:
@@ -1052,7 +1048,7 @@ class GraphicsTab(QWidget):
 		group = QGroupBox(lang.t("tab_graphics"))
 		group.setProperty("profile", True)
 
-		group_layout = QHBoxLayout()
+		group_layout = QVBoxLayout()
 		group.setLayout(group_layout)
 
 		try:
@@ -1073,7 +1069,7 @@ class GraphicsTab(QWidget):
 					card_layout = QHBoxLayout()
 					info_layout = QGridLayout()
 					attrs = {
-						lang.t("name"): gpu.name,
+						lang.t("gpu_name"): gpu.name,
 						"UUID": gpu.uuid,
 						"GPU ID": gpu.id,
 						lang.t("gpu_load"): round(gpu.load * 100, 2),
@@ -1129,7 +1125,7 @@ class GraphicsTab(QWidget):
 							Qt.AlignmentFlag.AlignVCenter
 						)
 
-						value_widget = QLabel(str(value))
+						value_widget = blue_label(str(value))
 						info_layout.addWidget(label_widget, row, 0)
 						info_layout.addWidget(value_widget, row, 1)
 						row += 1
@@ -1191,138 +1187,276 @@ class GraphicsTab(QWidget):
 		self.setLayout(layout)
 
 class UsageGraph(QWidget):
-	def __init__(self, max_points=120):
-		super().__init__()
-		self.setMinimumHeight(220)
-		self.data = deque([0]*max_points, maxlen=max_points)
 
-	def add_value(self, value):
-		self.data.append(value)
+	def __init__(self):
+		super().__init__()
+		self.values = [0]*60
+
+	def add_value(self, v):
+		self.values.append(v)
+		self.values.pop(0)
 		self.update()
 
 	def reset(self):
-		self.data.clear()
+		self.values = [0]*60
 		self.update()
-		
-	def paintEvent(self, event):
-		painter = QPainter(self)
-		painter.fillRect(self.rect(), QColor(theme.background()))
-		pen = QPen(QColor(theme.accent))
-		pen.setWidth(2)
-		painter.setPen(pen)
+
+	def paintEvent(self, e):
+		from PyQt6.QtGui import QPainter, QPen
+		from PyQt6.QtCore import QPointF
+
+		p = QPainter(self)
+		p.setRenderHint(QPainter.RenderHint.Antialiasing)
 
 		w = self.width()
 		h = self.height()
 
-		if len(self.data) < 2:
-			return
+		step = w/(len(self.values)-1)
 
-		step = w / (len(self.data)-1)
+		points = []
 
-		for i in range(len(self.data)-1):
-			x1 = i * step
-			x2 = (i+1) * step
+		for i,v in enumerate(self.values):
+			x = i*step
+			y = h - (v/100)*h
+			points.append(QPointF(x,y))
 
-			y1 = h - (self.data[i]/100)*h
-			y2 = h - (self.data[i+1]/100)*h
+		pen = QPen(QColor("#3daee9"),2)
+		p.setPen(pen)
 
-			painter.drawLine(int(x1), int(y1), int(x2), int(y2))
+		for i in range(len(points)-1):
+			p.drawLine(points[i],points[i+1])
+class DeviceCard(QWidget):
+    selected = pyqtSignal(str)
 
+    def __init__(self, name, subtitle="", color="#00bcd4"):
+        super().__init__()
+        self.device_name = name
+        self.selected_state = False
+
+        self.setFixedHeight(72)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(10,6,10,6)
+
+        self.dot = QLabel()
+        self.dot.setFixedSize(10,10)
+        self.dot.setStyleSheet(f"background:{color};border-radius:5px;")
+
+        text_layout = QVBoxLayout()
+        self.title = QLabel(name)
+        self.subtitle = QLabel(subtitle)
+        self.subtitle.setStyleSheet("color:gray;font-size:11px;")
+        text_layout.addWidget(self.title)
+        text_layout.addWidget(self.subtitle)
+
+        self.graph = UsageGraph()
+        self.graph.setFixedSize(80,40)
+
+        layout.addWidget(self.dot)
+        layout.addLayout(text_layout)
+        layout.addStretch()
+        layout.addWidget(self.graph)
+
+        self.update_style()
+
+    def update_style(self):
+        if self.selected_state:
+            self.setStyleSheet("background:#2a2a2a;border-radius:6px;")
+        else:
+            self.setStyleSheet("""
+                QWidget:hover{
+                    background:#202020;
+                    border-radius:6px;
+                }
+            """)
+
+    def set_selected(self, state):
+        self.selected_state = state
+        self.update_style()
+
+    def mousePressEvent(self, e):
+        self.selected.emit(self.device_name)
+
+    def update_value(self, text, value):
+        self.subtitle.setText(text)
+        self.graph.add_value(value)
+
+# =====================================
+# BENCH TAB
+# =====================================
 class BenchTab(QWidget):
-	def __init__(self):
-		super().__init__()
+    def __init__(self):
+        super().__init__()
 
-		main_layout = QHBoxLayout()
+        self.current_device = "CPU"
+        self.cards = {}
+        self.last_net = psutil.net_io_counters()
+        self.last_disk = psutil.disk_io_counters()
+        self.last_time = time.time()
+        self.c = wmi.WMI()  # inicializa WMI
 
-		self.side_list = QListWidget()
-		self.side_list.setFixedWidth(180)
-		self.side_list.addItems([
-			"CPU",
-			lang.t("memory"),
-			lang.t("disk"),
-			"GPU"
-		])
+        main_layout = QHBoxLayout(self)
 
-		self.side_list.currentRowChanged.connect(self.change_device)
+        # ---------------- SIDEBAR ----------------
+        self.sidebar_container = QWidget()
+        self.sidebar_layout = QVBoxLayout(self.sidebar_container)
+        self.sidebar_layout.setSpacing(6)
+        self.sidebar_layout.setContentsMargins(5,5,5,5)
 
-		main_layout.addWidget(self.side_list)
-		self.title      = QLabel("CPU")
-		self.graph      = UsageGraph()
-		right_layout    = QVBoxLayout()
-		self.info_label = AccentLabel("")
-		self.info_label.setStyleSheet("font-size:14px;")
-		self.title.setStyleSheet("font-size:22px;font-weight:bold;")
+        def add_card(name, color):
+            card = DeviceCard(name, "", color)
+            card.selected.connect(self.select_device)
+            self.sidebar_layout.addWidget(card)
+            self.cards[name] = card
 
-		right_layout.addWidget(self.title)
-		right_layout.addWidget(self.graph)
-		right_layout.addWidget(self.info_label)
-		main_layout.addLayout(right_layout)
-		self.setLayout(main_layout)
+        # cards fixos
+        add_card("CPU", "#00bcd4")
+        add_card("Memory", "#5c7cfa")
+        add_card("Ethernet", "#ff6ec7")
+        add_card("GPU", "#b197fc")
 
-		self.current_device = "CPU"
+        # detectar discos e adicionar cards
+        self.real_disks = []
+        for i, disk in enumerate(self.c.Win32_DiskDrive()):
+            name = disk.Model
+            interface = disk.InterfaceType
+            self.real_disks.append((name, interface))
+            disk_card_name = f"Disk {i} ({name})"
+            add_card(disk_card_name, "#ffa500")  # laranja para discos
 
-		self.timer = QTimer()
-		self.timer.timeout.connect(self.update_usage)
-		self.timer.start(1000)
+        self.sidebar_layout.addStretch()
 
-		self.side_list.setCurrentRow(0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.sidebar_container)
+        scroll.setFixedWidth(350)
 
-	def change_device(self, index):
-		devices = ["CPU", "Memory", "Disk", "GPU"]
+        main_layout.addWidget(scroll)
 
-		if index < 0:
-			return
+        # ---------------- RIGHT PANEL ----------------
+        right_layout = QVBoxLayout()
+        self.title = QLabel("CPU")
+        self.title.setStyleSheet("font-size:22px;font-weight:bold;")
+        self.graph = UsageGraph()
+        right_layout.addWidget(self.title)
+        right_layout.addWidget(self.graph)
 
-		self.current_device = devices[index]
+        # ===== INFO GRID =====
+        self.info_grid = QGridLayout()
+        self.info_grid.setSpacing(15)
+        self.info_labels = {}
 
-		self.title.setText(self.current_device)
+        def add_info(row, col, name):
+            title = QLabel(name)
+            title.setStyleSheet("color:gray;font-size:12px;")
+            value = QLabel("-")
+            value.setStyleSheet("font-size:14px;font-weight:bold;")
+            self.info_grid.addWidget(title, row*2, col)
+            self.info_grid.addWidget(value, row*2+1, col)
+            self.info_labels[name] = value
 
-		# limpa gráfico ao trocar
-		self.graph.reset()
+        add_info(0,0,"Usage")
+        add_info(0,1,"Speed")
+        add_info(1,0,"Processes")
+        add_info(1,1,"Threads")
+        add_info(2,0,"Cores")
+        add_info(2,1,"Logical")
 
-		# atualiza info instantaneamente
-		self.update_usage()
+        right_layout.addLayout(self.info_grid)
+        main_layout.addLayout(right_layout)
 
-	def update_usage(self):
+        # ---------------- TIMER ----------------
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_usage)
+        self.timer.start(1000)
 
-		if self.current_device == "CPU":
-			value = psutil.cpu_percent()
-			self.info_label.setText(f"Usage: {value}%")
+    # =================================================
+    def select_device(self, name):
+        for card in self.cards.values():
+            card.set_selected(False)
+        self.cards[name].set_selected(True)
+        self.current_device = name
+        self.title.setText(name)
+        self.graph.reset()
 
-		elif self.current_device == "Memory":
-			mem = psutil.virtual_memory()
-			value = mem.percent
-			self.info_label.setText(
-				f"Used: {mem.used//(1024**3)}GB / "
-				f"{mem.total//(1024**3)}GB ({value}%)"
-			)
+    # =================================================
+    def update_usage(self):
+        value = 0
 
-		elif self.current_device == "Disk":
-			disk = psutil.disk_usage("/")
-			value = disk.percent
-			self.info_label.setText(
-				f"Used: {disk.used//(1024**3)}GB / "
-				f"{disk.total//(1024**3)}GB ({value}%)"
-			)
+        # ---------- SIDEBAR UPDATE ----------
+        cpu = psutil.cpu_percent()
+        freq = psutil.cpu_freq()
+        self.cards["CPU"].update_value(
+            f"{cpu}% {freq.current/1000:.2f} GHz",
+            cpu
+        )
 
-		elif self.current_device == "GPU":
-			try:
-				gpus = GPUtil.getGPUs()
-				if gpus:
-					value = int(gpus[0].load * 100)
-					self.info_label.setText(lang.t("gpu_load_percent").format(value))
-				else:
-					value = 0
-					self.info_label.setText(lang.t("no_gpu"))
-			except:
-				value = 0
-				self.info_label.setText(lang.t("no_gpu2"))
+        net = psutil.net_io_counters()
+        up = (net.bytes_sent - self.last_net.bytes_sent)/1024
+        down = (net.bytes_recv - self.last_net.bytes_recv)/1024
+        self.cards["Ethernet"].update_value(
+            f"S:{up:.0f} R:{down:.0f} KB/s",
+            min(100,(up+down)/50)
+        )
+        self.last_net = net
 
-		else:
-			value = 0
+        mem = psutil.virtual_memory()
+        self.cards["Memory"].update_value(
+            f"{mem.used//(1024**3)}/{mem.total//(1024**3)} GB ({mem.percent}%)",
+            mem.percent
+        )
 
-		# adiciona valor no gráfico
-		self.graph.add_value(value)
+        # atualizar discos
+        partitions = psutil.disk_partitions()
+        for i, part in enumerate(partitions):
+            if i >= len(self.real_disks):
+                continue
+            disk_card_name = f"Disk {i} ({self.real_disks[i][0]})"
+            usage = psutil.disk_usage(part.mountpoint)
+            if disk_card_name in self.cards:
+                self.cards[disk_card_name].update_value(
+                    f"{usage.percent}%",
+                    usage.percent
+                )
+
+        # ================= CPU =================
+        if self.current_device == "CPU":
+            value = cpu
+            speed = freq.current/1000 if freq else 0
+            self.info_labels["Usage"].setText(f"{value}%")
+            self.info_labels["Speed"].setText(f"{speed:.2f} GHz")
+            self.info_labels["Processes"].setText(str(len(psutil.pids())))
+            self.info_labels["Threads"].setText(str(psutil.cpu_stats().ctx_switches))
+            self.info_labels["Cores"].setText(str(psutil.cpu_count(False)))
+            self.info_labels["Logical"].setText(str(psutil.cpu_count()))
+
+        # ================= MEMORY =================
+        elif self.current_device == "Memory":
+            value = mem.percent
+            self.info_labels["Usage"].setText(f"{value}%")
+            self.info_labels["Speed"].setText(
+                f"{mem.used//(1024**3)} / {mem.total//(1024**3)} GB"
+            )
+            self.info_labels["Processes"].setText(
+                f"{mem.available//(1024**3)} GB free"
+            )
+            self.info_labels["Threads"].setText("-")
+            self.info_labels["Cores"].setText("-")
+            self.info_labels["Logical"].setText("-")
+
+        # ================= GPU =================
+        elif self.current_device == "GPU":
+            try:
+                gpu = GPUtil.getGPUs()[0]
+                load = int(gpu.load*100)
+                temp = gpu.temperature
+                self.cards["GPU"].update_value(f"{load}% ({temp}°C)", load)
+                value = load
+            except:
+                value = 0
+
+        self.graph.add_value(value)
 
 class SettingsTab(QWidget):
 	def __init__(self, app_reference):
