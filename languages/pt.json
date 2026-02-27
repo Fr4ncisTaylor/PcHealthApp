@@ -103,7 +103,7 @@
   "gpu_memory_used":"Memória Usada (MB)",
   "gpu_memory_free":"Memória Livre (MB)",
   "gpu_memory_in_use":"Memória Ultilizada (%)",
-  "temperature": "Temperature (°C)",
+  "temperature": "Temperatura (°C)",
   "driver": "Driver",
   "display_active": "Display Ativo",
   "gpu_utilization":"GPU Ultilizada (%)",

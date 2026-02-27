@@ -17,6 +17,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from PyQt6 import QtGui
 
 def resource_path(relative_path):
     try:
@@ -1103,7 +1104,7 @@ class GraphicsTab(QWidget):
 						lang.t("gpu_memory_in_use"): round(
 							(gpu.memoryUsed / gpu.memoryTotal) * 100, 2
 						) if gpu.memoryTotal else "N/A",
-						lang.t("temperacure"): gpu.temperature,
+						lang.t("temperature"): gpu.temperature,
 						lang.t("driver"): getattr(gpu, "driver", "N/A"),
 						lang.t("display_active"): getattr(gpu, "display_active", "N/A"),
 					}
@@ -1838,8 +1839,8 @@ if __name__ == "__main__":
     # criar objetos DEPOIS do freeze_support
     c = wmi.WMI()
     theme = ThemeManager()
-
     app = QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon(resource_path("files/icon.ico")))
     app.setStyleSheet(build_stylesheet())
     window = PCHApp()
     window.show()
