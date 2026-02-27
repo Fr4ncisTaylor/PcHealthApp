@@ -18,6 +18,13 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 # IF NVIDIA AVALIABLE
 try:
 	import pynvml
@@ -120,9 +127,9 @@ class LanguageManager:
 		self.load_config()
 
 	def load_config(self):
-		if os.path.exists("files/config.json"):
+		if os.path.exists(resource_path("files/config.json")):
 			try:
-				with open("files/config.json", "r", encoding="utf-8") as f:
+				with open(resource_path("files/config.json"), "r", encoding="utf-8") as f:
 					config = json.load(f)
 					self.current_language = config.get("language", "pt")
 			except:
@@ -130,12 +137,13 @@ class LanguageManager:
 		self.load_language(self.current_language)
 
 	def save_config(self):
-		with open("files/config.json", "w", encoding="utf-8") as f:
+		with open(resource_path("files/config.json"), "w", encoding="utf-8") as f:
 			json.dump({"language": self.current_language}, f, indent=4)
 
 	def load_language(self, lang_code):
 		try:
-			with open(f"languages/{lang_code}.json", "r", encoding="utf-8") as f:
+			arq = resource_path(f"languages/{lang_code}.json")
+			with open(arq, "r", encoding="utf-8") as f:
 				self.translations = json.load(f)
 				self.current_language = lang_code
 				self.save_config()
@@ -386,9 +394,6 @@ class CPUTab(QWidget):
 	def __init__(self):
 		super().__init__()
 
-		BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-		IMG_DIR = os.path.join(BASE_DIR, "files/images")
-
 		root_layout = QHBoxLayout()
 
 		# LEFT SIDE (ALL CPU DATA)
@@ -509,13 +514,13 @@ class CPUTab(QWidget):
 		name_lower = name.lower()
 
 		if "intel" in name_lower:
-			img_path = os.path.join(IMG_DIR, "intel.png")
+			img_path = resource_path("files/images/intel.png")
 		elif "amd" in name_lower and "ryzen" not in name_lower:
-			img_path = os.path.join(IMG_DIR, "amd.png")
+			img_path = resource_path("files/images/amd.png")
 		elif "ryzen" in name_lower:
-			img_path = os.path.join(IMG_DIR, "ryzen.jpg")
+			img_path = resource_path("files/images/ryzen.jpg")
 		else:
-			img_path = os.path.join(IMG_DIR, "cpu.png")
+			img_path = resource_path("files/images/cpu.png")
 
 		pixmap = QPixmap(img_path)
 
@@ -1146,13 +1151,13 @@ class GraphicsTab(QWidget):
 					name = gpu.name.lower()
 
 					if "nvidia" in name:
-						img_path = os.path.join(IMG_DIR, "nvidia.png")
+						img_path = resource_path("files/images/nvidia.png")
 					elif "amd" in name or "radeon" in name:
-						img_path = os.path.join(IMG_DIR, "amd.jpg")
+						img_path = resource_path("files/images/amd.jpg")
 					elif "intel" in name:
-						img_path = os.path.join(IMG_DIR, "intel.png")
+						img_path = resource_path("files/images/intel.png")
 					else:
-						img_path = os.path.join(IMG_DIR, "gpu.png")
+						img_path = resource_path("files/images/gpu.png")
 
 					pixmap = QPixmap(img_path)
 
@@ -1644,10 +1649,9 @@ class AboutTab(QWidget):
 		footer_layout = QHBoxLayout()
 		footer_layout.setContentsMargins(10, 0, 10, 0)
 
-		app_name = lang.t("app_name")
 		app_version = config_file.version
 
-		self.footer_label = QLabel(f"{app_name}  •  v{app_version}")
+		self.footer_label = QLabel(f"{config_file.name}  •  v{app_version}")
 		self.footer_label.setStyleSheet("""
 			color:#8a8a8a;
 			font-size:11px;
@@ -1672,7 +1676,7 @@ class AboutTab(QWidget):
 
 	def load_contributors(self):
 		try:
-			with open("files/contributors.json", "r", encoding="utf-8") as f:
+			with open(resource_path("files/contributors.json"), "r", encoding="utf-8") as f:
 				data = json.load(f)
 
 			self.contributors = data.get("contributors", [])

@@ -1,3 +1,4 @@
+name    = "PCH - Monitoramento do sistema"
 version = '0.0.1 BETA'
 default_lang = "pt"
 window_size = (1000, 800)
