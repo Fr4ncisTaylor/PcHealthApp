@@ -6,14 +6,14 @@
   "tab_mainboard": "Placa Mãe",
   "tab_memory": "Memória",
   "tab_spd": "SPD",
-  "tab_graphics": "Graphics Processing Units",
+  "tab_graphics": "Unidades de Processamento Gráfico",
   "tab_bench": "Desempenho",
   "tab_settings": "Configurações",
   "tab_about": "Sobre",
 
   "processor_label": "Informações do Processador",
 
-  "unknown_processor_intel": "Intel Gen Desconecido",
+  "unknown_processor_intel": "Intel Gen Desconhecido",
   "unknown_processor_ryzen": "Ryzen Gen Desconhecido",
 
   "name": "Nome:",
@@ -60,7 +60,7 @@
   "mem_size": "Tamanho:",
   "mem_llc": "LLC/Ring:",
 
-  "mem_dram_freq": "DRAM Frequency:",
+  "mem_dram_freq": "Frequência da DRAM:",
   "mem_fsb_dram": "FSB:DRAM:",
   "mem_cas": "CAS# Latency (CL):",
   "mem_trcd": "RAS# to CAS# Delay (tRCD):",
