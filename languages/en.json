@@ -7,6 +7,7 @@
   "tab_graphics": "Graphics",
   "tab_bench": "Bench",
   "tab_about": "About",
+  "tab_settings": "Settings",
 
   "processor_label": "Processor Information",
 
@@ -30,6 +31,9 @@
   "cpu_in_use": "CPU in use:",
   "export_data_in_json": "Export processor data (JSON)",
 
+  "profile_button1": "Github",
+  "profile_button2": "Instagram",
+  
   "motherboard": "Motherboard",
   "manufacture": "Manufacturer",
   "model": "Model",
@@ -52,19 +56,19 @@
 
   "mem_general": "Geral:",
   "mem_timings": "Timings:",
-  "mem_type": "Tipo:",
+  "mem_type": "Type:",
   "mem_channel": "Channel:",
-  "mem_size": "Type:",
+  "mem_size": "Size:",
   "mem_llc": "LLC/Ring:",
 
-  "mem_dram_freq": "DRAM Frequency:",
+  "mem_dram_freq": "DRAM Frequency",
   "mem_fsb_dram": "FSB:DRAM:",
   "mem_cas": "CAS# Latency (CL):",
   "mem_trcd": "RAS# to CAS# Delay (tRCD):",
   "mem_trp": "RAS# Precharge (tRP):",
   "mem_tras": "Cycle Time (tRAS):",
   "mem_trc": "Row Refresh Cycle Time (tRFC):",
-  "mem_command_rate": "Command Rate (cR):",
+  "mem_command_rate": "Command Rate (CR):",
 
   "gpu_larg": "Current Widghet",
   "gpu_max": "Maximum Supported",

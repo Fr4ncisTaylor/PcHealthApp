@@ -41,7 +41,7 @@ def build_stylesheet():
 		font-size: 13px;
 	}}
 	QTabBar::tab {{
-		background: {theme.surface()};
+		background-color: {theme.surface()};
 		border: 1px solid {theme.border()};
 		padding: 6px 12px;
 		border-radius: 6px;
@@ -49,7 +49,7 @@ def build_stylesheet():
 	}}
 	QTabWidget::pane {{
 		border: none;
-		background: {theme.background()};
+		background-color: {theme.background()};
 	}}
 	QWidget {{
 		background-color: {theme.background()};
@@ -57,7 +57,7 @@ def build_stylesheet():
 	}}
 
 	QGroupBox {{
-		background: {theme.surface()};
+		background-color: {theme.surface()};
 		border: 1px solid {theme.border()};
 		border-radius: 10px;
 		margin-top: 12px;
@@ -78,19 +78,19 @@ def build_stylesheet():
 	}}
 
 	QPushButton {{
-		background: {theme.accent};
-		color: black;
-		border-radius: 8px;
-		padding: 6px 12px;
-		font-weight: bold;
+    background-color: {theme.accent};
+    color: black;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: bold;
 	}}
 
 	QPushButton:hover {{
-		background: {theme.accent_hover()};
+	    background-color: {theme.accent_hover()};
 	}}
 
 	QComboBox {{
-		background: {theme.surface()};
+		background-color: {theme.surface()};
 		border: 1px solid {theme.border()};
 		border-radius: 6px;
 		padding: 6px;
@@ -102,19 +102,19 @@ def build_stylesheet():
 	}}
 
 	QComboBox QAbstractItemView {{
-		background: {theme.surface()};
+		background-color: {theme.surface()};
 		color: {theme.text()};
 		border: 1px solid {theme.border()};
 	}}
 
 	QTabBar::tab {{
-		background: {theme.surface()};
+		background-color: {theme.surface()};
 		padding: 6px 12px;
 		border: 1px solid {theme.border()};
 	}}
 
 	QTabBar::tab:selected {{
-		background: {theme.background()};
+		background-color: {theme.background()};
 		color: {theme.accent};
 		font-weight: bold;
 	}}
@@ -153,14 +153,11 @@ class LanguageManager:
 	def t(self, key):
 		return self.translations.get(key, key)
 
-lang = LanguageManager()
-c    = wmi.WMI()
-
 class ThemeManager:
 	def __init__(self):
-		self.file = "theme.json"
+		self.file = resource_path("theme.json")
 		self.theme = "dark"
-		self.accent = "#4fc3f7"
+		self.accent = config_file.COLOR_MAP['Orange']
 		self.load()
 
 	def load(self):
@@ -168,7 +165,7 @@ class ThemeManager:
 			try:
 				data = json.load(open(self.file))
 				self.theme = data.get("theme", "dark")
-				self.accent = data.get("accent", "#4fc3f7")
+				self.accent = config_file.COLOR_MAP['Orange']
 			except:
 				pass
 
@@ -220,8 +217,6 @@ class ThemeManager:
 	def accent_pressed(self):
 		return self.darker(self.accent, 1.25)
 
-theme = ThemeManager()
-
 class AccentButton(QPushButton):
 	def __init__(self, text=""):
 		super().__init__(text)
@@ -230,15 +225,16 @@ class AccentButton(QPushButton):
 	def update_style(self):
 		self.setStyleSheet(f"""
 			QPushButton {{
-				background-color: {theme.accent};
+				background-color: #2a2a2a;
 				color: white;
 				border-radius: 6px;
 				padding: 8px 14px;
 				font-weight: bold;
+				border: 1px solid #3a3a3a;
 			}}
 
 			QPushButton:hover {{
-				background-color: {theme.accent_hover};
+				background-color: #3a3a3a;
 			}}
 
 			QPushButton:pressed {{
@@ -271,6 +267,7 @@ def blue_label(text=""):
 
 # CPU TAB
 def detect_generation(cpu_name):
+	lang = LanguageManager()
 	cpu_name = cpu_name.lower()
 
 	# INTEL
@@ -306,6 +303,7 @@ def detect_generation(cpu_name):
 	return lang.t("unknown")
 
 def detect_cpu_info(cpu_name):
+	lang = LanguageManager()
 	name = cpu_name.lower()
 	# INTEL
 	if "intel" in name:
@@ -401,6 +399,7 @@ class CPUTab(QWidget):
 		main_layout = QVBoxLayout()
 
 		cpu = cpuinfo.get_cpu_info()
+		lang = LanguageManager()
 
 		try:
 			win_cpu = c.Win32_Processor()[0]
@@ -495,8 +494,25 @@ class CPUTab(QWidget):
 		main_layout.addWidget(clocks_group)
 		main_layout.addWidget(usage_group)
 
+
+
+
 		self.export_btn = QPushButton(lang.t("export_data_in_json"))
 		self.export_btn.clicked.connect(self.export_json)
+		self.export_btn.setStyleSheet("""
+    QPushButton {
+        color: white;
+        background-color: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        border-radius: 6px;
+        padding: 6px 12px;
+    }
+    QPushButton:hover {
+        background-color: #3a3a3a;
+    }
+""")
+		main_layout.addWidget(self.export_btn)
+		main_layout.addStretch()
 		main_layout.addWidget(self.export_btn)
 		main_layout.addStretch()
 
@@ -563,7 +579,7 @@ class CPUTab(QWidget):
 		self.cpu_data["CPU Usage"] = usage_text
 
 		if usage_value < 40:
-			color = "#4fc3f7"
+			color = "#ffb74d"
 		elif usage_value <= 80:
 			color = "#ffd54f"
 		else:
@@ -590,16 +606,15 @@ class MainboardTab(QWidget):
 		super().__init__()
 
 		main_layout = QVBoxLayout()
-		w = wmi.WMI()
 
 		# MOTHERBOARD GROUP
-
+		lang = LanguageManager()
 		mb_group = QGroupBox(lang.t("motherboard"))
 		mb_group.setProperty("profile", True)
 		mb_layout = QGridLayout()
 
 		try:
-			board = w.Win32_BaseBoard()[0]
+			board = c.Win32_BaseBoard()[0]
 			manufacturer = board.Manufacturer
 			model = board.Product
 		except:
@@ -607,7 +622,7 @@ class MainboardTab(QWidget):
 			model = "N/A"
 
 		try:
-			cpu = w.Win32_Processor()[0]
+			cpu = c.Win32_Processor()[0]
 			bus = f"{cpu.ExtClock} MHz"
 		except:
 			bus = "N/A"
@@ -638,7 +653,7 @@ class MainboardTab(QWidget):
 		bios_layout = QGridLayout()
 
 		try:
-			bios = w.Win32_BIOS()[0]
+			bios = c.Win32_BIOS()[0]
 			brand = bios.Manufacturer
 			version = bios.SMBIOSBIOSVersion
 			raw_date = bios.ReleaseDate[:8]
@@ -679,7 +694,7 @@ class MainboardTab(QWidget):
 		graphics_layout = QGridLayout()
 
 		try:
-			gpu = w.Win32_VideoController()[0]
+			gpu = c.Win32_VideoController()[0]
 			bus = "PCI Express"
 		except:
 			bus = "N/A"
@@ -705,6 +720,7 @@ class MainboardTab(QWidget):
 		self.setLayout(main_layout)
 
 def get_real_ram_info_slots():
+	lang = LanguageManager()
 	ddr_map  = config_file.ddr_map
 	ram_data = {
 		"total_size_gb": 0,
@@ -756,6 +772,7 @@ def get_real_ram_info_slots():
 	return ram_data
 
 def get_real_ram_info():
+	lang = LanguageManager()
 	modules = []
 	total_capacity = 0
 	speeds = []
@@ -853,6 +870,7 @@ def get_dynamic_timings():
 class MemoryTab(QWidget):
 	def __init__(self):
 		super().__init__()
+		lang = LanguageManager()
 		main_layout = QVBoxLayout()
 
 		self.ram_info = get_real_ram_info()
@@ -941,11 +959,12 @@ class MemoryTab(QWidget):
 		)
 
 		dynamic_timings = get_dynamic_timings()
-		self.timing_values[0].setText(f"{dynamic_timings['mem_dram_freq']} MHz")
+		self.timing_values[0].setText(f"{dynamic_timings['mem_dram_freq']} (MHz)")
 		self.timing_values[1].setText(dynamic_timings['mem_fsb_dram'])
 		self.timing_values[2].setText(dynamic_timings['mem_command_rate'])
 
 	def apply_language(self):
+		lang = LanguageManager()
 		self.general_group.setTitle(lang.t("mem_general"))
 		self.timing_group.setTitle(lang.t("mem_timings"))
 		self.type_label.setText(lang.t("mem_type"))
@@ -961,12 +980,12 @@ class MemoryTab(QWidget):
 		for label, key in zip(self.timing_labels, timing_keys):
 			ending = ""
 			if key == 'mem_dram_freq':
-				ending = " MHz"
-				label.setText(lang.t(key + ending))
+				ending = " (MHz):"
+				label.setText(lang.t(key) + ending)
 				continue
 			if key in ["mem_cas","mem_trcd","mem_trp","mem_tras","mem_trc"]:
 				ending = " Clocks"
-				label.setText(lang.t(key + ending))
+				label.setText(lang.t(key) + ending)
 				continue
 			label.setText(lang.t(key + ending))
 
@@ -976,7 +995,7 @@ class SPDTab(QWidget):
 		super().__init__()
 		layout = QVBoxLayout()
 		layout.setSpacing(10)
-
+		lang = LanguageManager()
 		group = QGroupBox(lang.t("spd_title"))
 		group.setProperty("profile", True)
 		group_layout = QVBoxLayout()
@@ -1046,7 +1065,7 @@ class GraphicsTab(QWidget):
 
 		layout = QVBoxLayout()
 		layout.setSpacing(10)
-
+		lang = LanguageManager()
 		BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 		IMG_DIR = os.path.join(BASE_DIR, "files/images")
 
@@ -1230,6 +1249,7 @@ class UsageGraph(QWidget):
 
 		for i in range(len(points)-1):
 			p.drawLine(points[i],points[i+1])
+
 class DeviceCard(QWidget):
     selected = pyqtSignal(str)
 
@@ -1246,7 +1266,7 @@ class DeviceCard(QWidget):
 
         self.dot = QLabel()
         self.dot.setFixedSize(10,10)
-        self.dot.setStyleSheet(f"background:{color};border-radius:5px;")
+        self.dot.setStyleSheet(f"background-color:{color};border-radius:5px;")
 
         text_layout = QVBoxLayout()
         self.title = QLabel(name)
@@ -1267,7 +1287,7 @@ class DeviceCard(QWidget):
 
     def update_style(self):
         if self.selected_state:
-            self.setStyleSheet("background:#2a2a2a;border-radius:6px;")
+            self.setStyleSheet("background-color:#2a2a2a;border-radius:6px;")
         else:
             self.setStyleSheet("""
                 QWidget:hover{
@@ -1287,9 +1307,7 @@ class DeviceCard(QWidget):
         self.subtitle.setText(text)
         self.graph.add_value(value)
 
-# =====================================
-# BENCH TAB
-# =====================================
+
 class BenchTab(QWidget):
     def __init__(self):
         super().__init__()
@@ -1299,7 +1317,7 @@ class BenchTab(QWidget):
         self.last_net = psutil.net_io_counters()
         self.last_disk = psutil.disk_io_counters()
         self.last_time = time.time()
-        self.c = wmi.WMI()  # inicializa WMI
+        self.c = c
 
         main_layout = QHBoxLayout(self)
 
@@ -1472,6 +1490,7 @@ class SettingsTab(QWidget):
 		layout = QVBoxLayout()
 
 		# LANGUAGE
+		lang = LanguageManager()
 		lang_group = QGroupBox("Language")
 		lang_layout = QVBoxLayout()
 
@@ -1495,16 +1514,17 @@ class SettingsTab(QWidget):
 		self.setLayout(layout)
 
 	def change_language(self):
+		lang = LanguageManager()
 		lang.load_language(self.lang_combo.currentData())
 		self.app_reference.refresh_ui()
 
 	def change_color(self, text):
-		theme.accent = config_file.COLOR_MAP[text]
-		theme.save()
+	    raw = config_file.COLOR_MAP['Orange']
+	    theme.accent = QColor(raw).name()
+	    theme.save()
 
-		QApplication.instance().setStyleSheet(build_stylesheet())
-
-		self.app_reference.refresh_ui()
+	    QApplication.instance().setStyleSheet(build_stylesheet())
+	    self.app_reference.refresh_ui()
 
 	def update_accent_labels(self, widget):
 		for child in widget.findChildren(AccentLabel):
@@ -1536,7 +1556,7 @@ class AboutTab(QWidget):
 		left_card.setProperty("profile", True)
 
 		left_layout = QVBoxLayout()
-
+		lang = LanguageManager()
 		title = QLabel(lang.t("contribuitors"))
 		title.setStyleSheet(
 			"color:white;font-size:18px;font-weight:bold;border:none;"
@@ -1546,7 +1566,7 @@ class AboutTab(QWidget):
 		self.contrib_list = QListWidget()
 		self.contrib_list.setStyleSheet("""
 			QListWidget{
-				background:#111;
+				background-color:#111;
 				border:none;
 				color:white;
 				padding:8px;
@@ -1556,7 +1576,7 @@ class AboutTab(QWidget):
 				border-radius:6px;
 			}
 			QListWidget::item:hover{
-				background:#222;
+				background-color:#222;
 			}
 		""")
 
@@ -1608,22 +1628,20 @@ class AboutTab(QWidget):
 
 		self.follow_btn = AccentButton(lang.t("profile_button1"))
 		self.coffee_btn = AccentButton(lang.t("profile_button2"))
-
 		btn_style = """
 			QPushButton{
-				background:#242424;
+				background-color: #2a2a2a;
 				color:white;
-				border-radius:8px;
+				border-radius: 6px;
 				padding:8px 14px;
 				font-weight:bold;
-				border:1px solid #2a2a2a;
+				border: 1px solid #3a3a3a;
 			}
 			QPushButton:hover{
-				background:#4fc3f7;
+		        background-color: #3a3a3a;
 				color:black;
 			}
 		"""
-
 		self.follow_btn.setStyleSheet(btn_style)
 		self.coffee_btn.setStyleSheet(btn_style)
 
@@ -1641,7 +1659,7 @@ class AboutTab(QWidget):
 		footer.setFixedHeight(32)
 		footer.setStyleSheet("""
 			QFrame{
-				background:#0f0f0f;
+				background-color:#0f0f0f;
 				border-top:1px solid #222;
 			}
 		""")
@@ -1702,7 +1720,7 @@ class AboutTab(QWidget):
 		self.user_label.setText(c.get("username", ""))
 		self.bio_label.setText(c.get("bio", ""))
 
-		pix = QPixmap(c.get("image", ""))
+		pix = QPixmap(resource_path("files/images/" + c.get("image", "")))
 		if not pix.isNull():
 			self.pic.setPixmap(
 				pix.scaled(
@@ -1728,7 +1746,8 @@ class AboutTab(QWidget):
 class PCHApp(QWidget):
 	def __init__(self):
 		super().__init__()
-		self.setWindowTitle(lang.t("app_name") + " - " + config_file.version)
+		lang = LanguageManager()
+		self.setWindowTitle(config_file.name + " | " + config_file.version)
 		self.setGeometry(100, 100, 750, 550)
 		self.setObjectName("root")
 		self.setFixedSize(config_file.window_size[0], config_file.window_size[1])
@@ -1739,13 +1758,13 @@ class PCHApp(QWidget):
 				font-size: 13px;
 			}
 			QTabBar::tab {
-				background: #2d2d30;
+				background-color: #2d2d30;
 				padding: 6px 12px;
 				border: 1px solid #3c3c3c;
 			}
 			QTabBar::tab:selected {
-				background: #1e1e1e;
-				color: #4fc3f7;
+				background-color: #1e1e1e;
+				color: #ffb74d;
 				font-weight: bold;
 			}
 			QGroupBox {
@@ -1775,6 +1794,7 @@ class PCHApp(QWidget):
 		self.refresh_ui()
 
 	def refresh_ui(self):
+		lang = LanguageManager()
 		tab_keys = [
 			"tab_processor",
 			"tab_mainboard",
@@ -1790,14 +1810,12 @@ class PCHApp(QWidget):
 			if index < self.tabs.count():
 				self.tabs.setTabText(index, lang.t(key))
 
-		# 🔥 Atualiza conteúdo interno das abas
 		for i in range(self.tabs.count()):
 			widget = self.tabs.widget(i)
 
 			if widget and hasattr(widget, "apply_language"):
 				widget.apply_language()
 
-		# 🔥 Força repaint geral (garante atualização visual completa)
 		QApplication.instance().setStyleSheet(build_stylesheet())
 
 		# atualiza botões accent
@@ -1814,8 +1832,15 @@ class PCHApp(QWidget):
 			w.update_style()
 
 if __name__ == "__main__":
-	app = QApplication(sys.argv)
-	window = PCHApp()
-	app.setStyleSheet(build_stylesheet())
-	window.show()
-	sys.exit(app.exec())
+    import multiprocessing
+    multiprocessing.freeze_support()
+
+    # criar objetos DEPOIS do freeze_support
+    c = wmi.WMI()
+    theme = ThemeManager()
+
+    app = QApplication(sys.argv)
+    app.setStyleSheet(build_stylesheet())
+    window = PCHApp()
+    window.show()
+    sys.exit(app.exec())

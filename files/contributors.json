@@ -2,17 +2,17 @@
   "contributors": [
     {
       "name": "Francis Taylor",
-      "username": "Git: @Fr4ncisTaylor",
+      "username": "Developer",
       "bio": "Developer of PC Health. Python & Qt enthusiast.",
-      "image": "files/images/profile.jpg",
+      "image": "profile.jpg",
       "button1_value": "https://github.com/Fr4ncisTaylor",
       "button2_value": "https://instagram.com/slash.baiano"
     },
     {
       "name": "Henx",
-      "username": "Git: @hvqiws",
+      "username": "Developer",
       "bio": "Developer of PC Health. Python & Qt enthusiast.",
-      "image": "files/images/profile2.png",
+      "image": "profile2.png",
       "button1_value": "https://github.com/hvqiws",
       "button2_value": "https://instagram.com/hyqrd"
     }

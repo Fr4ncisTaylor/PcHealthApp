@@ -86,15 +86,15 @@ def build_stylesheet():
 	}}
 
 	QPushButton {{
-		background: {theme.accent};
-		color: black;
-		border-radius: 8px;
-		padding: 6px 12px;
-		font-weight: bold;
+    background-color: {theme.accent};
+    color: black;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: bold;
 	}}
 
 	QPushButton:hover {{
-		background: {theme.accent_hover()};
+	    background-color: {theme.accent_hover()};
 	}}
 
 	QComboBox {{
@@ -105,9 +105,9 @@ def build_stylesheet():
 		color: {theme.text()};
 	}}
 
-	QComboBox:hover {{
-		border: 1px solid {theme.accent};
-	}}
+		QComboBox:hover {{
+		    border: 1px solid {theme.accent};
+		}}
 
 	QComboBox QAbstractItemView {{
 		background: {theme.surface()};
@@ -175,7 +175,7 @@ class ThemeManager:
 		self.file = "theme.json"
 
 		self.theme = "dark"
-		self.accent = "#4fc3f7"
+		self.accent = "#ffb74d"
 
 		self.load()
 

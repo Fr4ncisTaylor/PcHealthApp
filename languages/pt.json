@@ -1,6 +1,4 @@
 {
-  "app_name": "Meu saco peludo",
-
   "unknown": "Desconhecido",
   "tab_processor": "Processador",
   "tab_mainboard": "Placa Mãe",
@@ -60,14 +58,14 @@
   "mem_size": "Tamanho:",
   "mem_llc": "LLC/Ring:",
 
-  "mem_dram_freq": "Frequência da DRAM:",
+  "mem_dram_freq": "Frequência da DRAM",
   "mem_fsb_dram": "FSB:DRAM:",
   "mem_cas": "CAS# Latencia (CL):",
   "mem_trcd": "RAS# to CAS# Delay (tRCD):",
   "mem_trp": "RAS# Precharge (tRP):",
   "mem_tras": "Cycle Time (tRAS):",
   "mem_trc": "Row Refresh Cycle Time (tRFC):",
-  "mem_command_rate": "Command Rate (cR):",
+  "mem_command_rate": "Command Rate (CR):",
 
   "profile_button1": "Github",
   "profile_button2": "Instagram",
