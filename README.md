@@ -84,6 +84,6 @@ python main.py
 
 ## 📌 Contribuidores
 
-- GitHub: [Henx]([https://instagram.com/slash.baiano](https://github.com/hvqiws))  
+- GitHub: [Henx](https://github.com/hvqiws)  
 
 > Feito com ❤️ Python e PyQt6
