@@ -1103,7 +1103,7 @@ class GraphicsTab(QWidget):
 						lang.t("gpu_memory_in_use"): round(
 							(gpu.memoryUsed / gpu.memoryTotal) * 100, 2
 						) if gpu.memoryTotal else "N/A",
-						lang.t("temperacure"): gpu.temperature,
+						lang.t("temperature"): gpu.temperature,
 						lang.t("driver"): getattr(gpu, "driver", "N/A"),
 						lang.t("display_active"): getattr(gpu, "display_active", "N/A"),
 					}
