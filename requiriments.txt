@@ -5,3 +5,4 @@ wmi
 requests
 beautifulsoup4
 pywin32
+GPUtil

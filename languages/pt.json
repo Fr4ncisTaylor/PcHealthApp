@@ -13,21 +13,21 @@
 
   "processor_label": "Informações do Processador",
 
-  "unknown_processor_intel": "Unknown Intel Gen",
-  "unknown_processor_ryzen": "Unknown Ryzen Gen",
+  "unknown_processor_intel": "Intel Gen Desconecido",
+  "unknown_processor_ryzen": "Ryzen Gen Desconhecido",
 
   "name": "Nome:",
   "generation": "Geração",
   "socket": "Soquete:",
   "cores": "Núcleos:",
-  "family": "Family:",
-  "model": "Model:",
-  "stepping": "Stepping:",
+  "family": "Familia:",
+  "model": "Modelo:",
+  "stepping": "Dormindo:",
 
   "clocks": "Núcleos",
   "base_clock": "Clock base:",
   "max_clock": "Clock máximo:",
-  "speed_clock": "velocidade:",
+  "speed_clock": "Velocidade:",
 
   "use": "Uso",
   "cpu_in_use": "CPU em uso:",
@@ -97,6 +97,7 @@
   "voltage_set":"Configured Voltage",
   "status": "Status",
   "tag": "Tag",
+  "gpu_name": "Nome",
   "no_gpu": "GPU não detectada",
   "no_gpu2": "GPU indisponível",
   "gpu_load": "Carga da GPU (%)",

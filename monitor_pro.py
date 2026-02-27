@@ -514,10 +514,10 @@ class CPUTab(QWidget):
 
 		if "intel" in name_lower:
 			img_path = os.path.join(IMG_DIR, "intel.png")
-		elif "amd" in name_lower:
+		elif "amd" in name_lower and "ryzen" not in name_lower:
 			img_path = os.path.join(IMG_DIR, "amd.png")
 		elif "ryzen" in name_lower:
-			img_path = os.path.join(IMG_DIR, "ryzer.png")
+			img_path = os.path.join(IMG_DIR, "ryzen.jpg")
 		else:
 			img_path = os.path.join(IMG_DIR, "cpu.png")
 
