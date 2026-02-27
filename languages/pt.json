@@ -1,0 +1,74 @@
+{
+  "app_name": "Meu saco peludo",
+
+  "unknown": "Desconhecido",
+  "tab_processor": "Processador",
+  "tab_mainboard": "Placa Mãe",
+  "tab_memory": "Memória",
+  "tab_spd": "SPD",
+  "tab_graphics": "Placa Gráfica",
+  "tab_bench": "Desempenho",
+  "tab_settings": "Configurações",
+  "tab_about": "Sobre",
+
+  "processor_label": "Informações do Processador",
+
+  "unknown_processor_intel": "Unknown Intel Gen",
+  "unknown_processor_ryzen": "Unknown Ryzen Gen",
+
+  "name": "Nome:",
+  "generation": "Geração",
+  "socket": "Soquete:",
+  "cores": "Núcleos:",
+  "family": "Family:",
+  "model": "Model:",
+  "stepping": "Stepping:",
+
+  "clocks": "Núcleos",
+  "base_clock": "Clock base:",
+  "max_clock": "Clock máximo:",
+  "speed_clock": "velocidade:",
+
+  "use": "Uso",
+  "cpu_in_use": "CPU em uso:",
+  "export_data_in_json": "Exportar dados do processador (JSON)",
+
+  "motherboard": "Placa Mãe",
+  "manufacture": "Fabricante",
+  "model": "Modelo",
+  "bus_specs": "Bus Specs",
+  "chipset": "Chipset",
+  "chipset_value": "Detectado através do modelo da placa",
+  "southbridge": "Southbridge",
+  "southbridge_value": "Requer driver de nível básico",
+  "lpcio": "LPCIO",
+  "no_access": "Sem Acesso",
+
+  "bios": "BIOS",
+  "brand": "Marca:",
+  "version": "Versão:",
+  "date": "Data:",
+  "microcode": "CPU Microcode",
+
+  "graphics": "Interface Gráfica",
+  "bus": "Bus:",
+
+  "mem_general": "Geral:",
+  "mem_timings": "Timings:",
+  "mem_type": "Tipo:",
+  "mem_channel": "Canal:",
+  "mem_size": "Tamanho:",
+  "mem_llc": "LLC/Ring:",
+
+  "mem_dram_freq": "DRAM Frequency:",
+  "mem_fsb_dram": "FSB:DRAM:",
+  "mem_cas": "CAS# Latency (CL):",
+  "mem_trcd": "RAS# to CAS# Delay (tRCD):",
+  "mem_trp": "RAS# Precharge (tRP):",
+  "mem_tras": "Cycle Time (tRAS):",
+  "mem_trc": "Row Refresh Cycle Time (tRFC):",
+  "mem_command_rate": "Command Rate (cR):",
+
+  "profile_button1": "Github",
+  "profile_button2": "Instagram"
+}

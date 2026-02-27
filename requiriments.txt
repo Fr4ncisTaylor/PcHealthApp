@@ -1,0 +1,7 @@
+PyQt6
+psutil
+py-cpuinfo
+wmi
+requests
+beautifulsoup4
+pywin32

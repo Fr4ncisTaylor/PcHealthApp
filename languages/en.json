@@ -1,0 +1,11 @@
+{
+  "tab_processor": "Processor",
+  "tab_mainboard": "Mainboard",
+  "tab_memory": "Memory",
+  "tab_spd": "SPD",
+  "tab_graphics": "Graphics",
+  "tab_bench": "Bench",
+  "tab_about": "About",
+
+  "processor_label": "Processor Information"
+}
