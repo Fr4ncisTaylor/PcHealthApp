@@ -685,10 +685,10 @@ class MainboardTab(QWidget):
 
 		graphics_data = [
 			(lang.t("bus"), bus),
-			("Largura atual", "x16 (Assumed)"),
-			("Máximo suportado", "x16"),
-			("Velocidade de link atual", "Depende da geração PCIe"),
-			("Velocidade máxima suportada", "Depende da GPU"),
+			(lang.t("gpu_larg"), "x16 (Assumed)"),
+			(lang.t("gpu_max"), "x16"),
+			(lang.t("gpu_speed_now"), lang.t("gpu_speed_now2")),
+			(lang.t("gpu_speed_max"), lang.t("gpu_speed_max2")),
 		]
 
 		for i, (label, value) in enumerate(graphics_data):
@@ -697,10 +697,8 @@ class MainboardTab(QWidget):
 
 		graphics_group.setLayout(graphics_layout)
 
-		# Adicionar lado a lado
 		lower_layout.addWidget(bios_group)
 		lower_layout.addWidget(graphics_group)
-
 		main_layout.addLayout(lower_layout)
 
 		self.setLayout(main_layout)
@@ -710,7 +708,7 @@ def get_real_ram_info_slots():
 	ram_data = {
 		"total_size_gb": 0,
 		"total_speed_mhz": 0,
-		"total_channels": "Unknown",
+		"total_channels": lang.t("unknown"),
 		"slots": []
 	}
 
@@ -727,8 +725,8 @@ def get_real_ram_info_slots():
 			speed = int(mem.Speed) if getattr(mem, "Speed", None) else 0
 			speeds.append(speed)
 
-			mem_type = ddr_map.get(getattr(mem, "SMBIOSMemoryType", 0), "Unknown")
-			manufacturer = getattr(mem, "Manufacturer", "Unknown")
+			mem_type = ddr_map.get(getattr(mem, "SMBIOSMemoryType", 0), lang.t("unknown"))
+			manufacturer = getattr(mem, "Manufacturer", lang.t("unknown"))
 
 			slot_info["manufacturer"] = manufacturer
 			slot_info["capacity_gb"] = round(capacity / (1024**3), 2)
@@ -752,13 +750,11 @@ def get_real_ram_info_slots():
 			ram_data["total_channels"] = "Single"
 
 	except Exception as e:
-		print("Erro ao pegar info da RAM:", e)
+		print(lang.t("error_get_ram_info"), e)
 
 	return ram_data
 
 def get_real_ram_info():
-	c = wmi.WMI()
-
 	modules = []
 	total_capacity = 0
 	speeds = []
@@ -767,14 +763,13 @@ def get_real_ram_info():
 
 	ram_info = {
 		"size": 0,
-		"type": "Unknown",
-		"manufacturer": "Unknown",
+		"type": lang.t("unknown"),
+		"manufacturer": lang.t("unknown"),
 		"speed": 0,
-		"channel": "Unknown"
+		"channel": lang.t("unknown")
 	}
 
 	try:
-		c = wmi.WMI()
 		modules = c.Win32_PhysicalMemory()
 		total_size = 0
 		manufacturers = set()
@@ -782,15 +777,14 @@ def get_real_ram_info():
 
 		for mem in modules:
 			total_size += int(mem.Capacity)
-			manufacturers.add(getattr(mem, "Manufacturer", "Unknown"))
+			manufacturers.add(getattr(mem, "Manufacturer", lang.t("unknown")))
 			speeds2.add(getattr(mem, "Speed", 0))
 
 		ram_info["size"] = total_size / (1024**3)  # GBytes
 		ram_info["manufacturer"] = ", ".join(manufacturers)
 		ram_info["speed"] = max(speeds2) if speeds2 else 0
-		ram_info["type"] = getattr(modules[0], "MemoryType", "Unknown")
+		ram_info["type"] = getattr(modules[0], "MemoryType", lang.t("unknown"))
 
-		# Detectar canais via Win32_PhysicalMemoryArray
 		arrays = c.Win32_PhysicalMemoryArray()
 		if arrays:
 			ram_info["channel"] = f"{getattr(arrays[0], 'MemoryDevices', 0)} Modules"
@@ -798,15 +792,9 @@ def get_real_ram_info():
 			ram_info["channel"] = f"{len(modules)} Modules"
 
 	except Exception as e:
-		print("Erro ao pegar info da RAM:", e)
+		print(lang.t("error_get_ram_info"), e)
 
-	ddr_map = {
-		20: "DDR",
-		21: "DDR2",
-		24: "DDR3",
-		26: "DDR4",
-		34: "DDR5"
-	}
+	ddr_map  = config_file.ddr_map
 
 	for mem in c.Win32_PhysicalMemory():
 		capacity = int(mem.Capacity)
@@ -829,34 +817,26 @@ def get_real_ram_info():
 		else:
 			channel = "Multi"
 
-	# Frequência média
 	speed = max(speeds) if speeds else 0
 
 	return {
 		"info": ram_info,
-		"type": mem_type if mem_type else "Unknown",
+		"type": mem_type if mem_type else lang.t("unknown"),
 		"size": total_gb,
 		"channel": channel,
 		"speed": speed
 	}
 
-# =====================
-# Função para pegar timings reais (apenas os que podem ser lidos)
-# =====================
 def get_dynamic_timings():
 	timings = {
 		"mem_dram_freq": 0,
 		"mem_fsb_dram": "0:0",
 		"mem_command_rate": "2T"  # fixo
 	}
-
 	try:
-		import wmi
-		c = wmi.WMI()
 		for mem in c.Win32_PhysicalMemory():
 			# Frequência DRAM real (MHz)
 			timings["mem_dram_freq"] = getattr(mem, "ConfiguredClockSpeed", 0)
-
 			# FSB:DRAM ratio aproximado
 			try:
 				timings["mem_fsb_dram"] = f"1:{max(1, int(int(timings['mem_dram_freq']) / 100))}"
@@ -864,22 +844,16 @@ def get_dynamic_timings():
 				timings["mem_fsb_dram"] = "N/A"
 			break  # pega só o primeiro módulo
 	except Exception as e:
-		print("Erro ao pegar timings:", e)
+		print(lang.t("error_get_timming_info"), e)
 
 	return timings
 
-
-# =====================
-# Classe MemoryTab
-# =====================
+# MemoryTab
 class MemoryTab(QWidget):
 	def __init__(self):
 		super().__init__()
 		main_layout = QVBoxLayout()
 
-		# =====================
-		# general GROUP
-		# =====================
 		self.ram_info = get_real_ram_info()
 		self.ram_info_slots = get_real_ram_info_slots()
 
@@ -905,11 +879,6 @@ class MemoryTab(QWidget):
 		general_grid.addWidget(self.size_value, 2, 1)
 
 		self.general_group.setLayout(general_grid)
-		
-
-		# =====================
-		# TIMINGS GROUP
-		# =====================
 		self.timing_group = QGroupBox()
 		self.timing_group.setProperty("profile", True)
 		timing_grid = QGridLayout()
@@ -917,13 +886,11 @@ class MemoryTab(QWidget):
 		self.timing_labels = []
 		self.timing_values = []
 		timing_keys = [
-			"mem_channel",
 			"mem_dram_freq",
 			"mem_fsb_dram",
 			"mem_command_rate"
 		]
 
-		# Cria labels e valores
 		for key in timing_keys:
 			label = QLabel()
 			value = blue_label()
@@ -956,9 +923,6 @@ class MemoryTab(QWidget):
 		self.timer.timeout.connect(self.update_memory)
 		self.timer.start(1000)
 
-	# =====================
-	# UPDATE VALUES
-	# =====================
 	def update_memory(self):
 		mem = psutil.virtual_memory()
 		info = self.ram_info
@@ -975,15 +939,11 @@ class MemoryTab(QWidget):
 			f"(Used {used_gb:.2f} GB / {mem.percent}% | Free {available_gb:.2f} GB)"
 		)
 
-		# TIMINGS DINÂMICOS
 		dynamic_timings = get_dynamic_timings()
 		self.timing_values[0].setText(f"{dynamic_timings['mem_dram_freq']} MHz")
 		self.timing_values[1].setText(dynamic_timings['mem_fsb_dram'])
 		self.timing_values[2].setText(dynamic_timings['mem_command_rate'])
 
-	# =====================
-	# LANGUAGE SUPPORT
-	# =====================
 	def apply_language(self):
 		self.general_group.setTitle(lang.t("mem_general"))
 		self.timing_group.setTitle(lang.t("mem_timings"))
@@ -1016,7 +976,7 @@ class SPDTab(QWidget):
 		layout = QVBoxLayout()
 		layout.setSpacing(10)
 
-		group = QGroupBox("SPD (Memory Modules)")
+		group = QGroupBox(lang.t("spd_title"))
 		group.setProperty("profile", True)
 		group_layout = QVBoxLayout()
 		group.setLayout(group_layout)
@@ -1027,29 +987,29 @@ class SPDTab(QWidget):
 			grid_layout.setSpacing(10)
 
 			if not ram_modules:
-				group_layout.addWidget(QLabel("No RAM modules detected"))
+				group_layout.addWidget(QLabel(lang.t("no_ram_error")))
 			else:
 				for i, mem in enumerate(ram_modules):
-					card = QGroupBox(f"Slot {i+1}: {getattr(mem, 'DeviceLocator', 'Unknown')}")
+					card = QGroupBox(f"Slot {i+1}: {getattr(mem, 'DeviceLocator', lang.t("unknown"))}")
 					card.setProperty("profile", True)
 					card_layout = QGridLayout()
 
 					attrs = {
-						"Bank Label": getattr(mem, "BankLabel", "N/A"),
-						"Device Locator": getattr(mem, "DeviceLocator", "N/A"),
-						"Manufacturer": getattr(mem, "Manufacturer", "N/A"),
-						"Serial Number": getattr(mem, "SerialNumber", "N/A"),
-						"Capacity (GB)": round(int(getattr(mem, "Capacity", 0)) / (1024**3), 2),
-						"Speed (MHz)": getattr(mem, "Speed", "N/A"),
-						"Configured Clock Speed": getattr(mem, "ConfiguredClockSpeed", "N/A"),
-						"Memory Type": getattr(mem, "MemoryType", "N/A"),
-						"SMBIOS Type": getattr(mem, "SMBIOSMemoryType", "N/A"),
-						"Form Factor": getattr(mem, "FormFactor", "N/A"),
-						"Data Width": getattr(mem, "DataWidth", "N/A"),
-						"Total Width": getattr(mem, "TotalWidth", "N/A"),
-						"Configured Voltage": getattr(mem, "ConfiguredVoltage", "N/A"),
-						"Status": getattr(mem, "Status", "N/A"),
-						"Tag": getattr(mem, "Tag", "N/A")
+						lang.t("bank_label"): getattr(mem, "BankLabel", "N/A"),
+						lang.t("device_locator"): getattr(mem, "DeviceLocator", "N/A"),
+						lang.t("manufacture"): getattr(mem, "Manufacturer", "N/A"),
+						lang.t("serial_number"): getattr(mem, "SerialNumber", "N/A"),
+						lang.t("capacity_in_gb"): round(int(getattr(mem, "Capacity", 0)) / (1024**3), 2),
+						lang.t("speed_in_hz"): getattr(mem, "Speed", "N/A"),
+						lang.t("config_clock_speed"): getattr(mem, "ConfiguredClockSpeed", "N/A"),
+						lang.t("memory_type"): getattr(mem, "MemoryType", "N/A"),
+						lang.t("smbios_type"): getattr(mem, "SMBIOSMemoryType", "N/A"),
+						lang.t("form_factor"): getattr(mem, "FormFactor", "N/A"),
+						lang.t("data_width"): getattr(mem, "DataWidth", "N/A"),
+						lang.t("total_width"): getattr(mem, "TotalWidth", "N/A"),
+						lang.t("voltage_set"): getattr(mem, "ConfiguredVoltage", "N/A"),
+						lang.t("status"): getattr(mem, "Status", "N/A"),
+						lang.t("tag"): getattr(mem, "Tag", "N/A")
 					}
 
 					row = 0
@@ -1089,7 +1049,7 @@ class GraphicsTab(QWidget):
 		BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 		IMG_DIR = os.path.join(BASE_DIR, "files/images")
 
-		group = QGroupBox("Graphics Processing Units")
+		group = QGroupBox(lang.t("tab_graphics"))
 		group.setProperty("profile", True)
 
 		group_layout = QHBoxLayout()
@@ -1102,44 +1062,31 @@ class GraphicsTab(QWidget):
 			grid_layout.setSpacing(10)
 
 			if not gpus:
-				group_layout.addWidget(QLabel("No GPU detected"))
+				group_layout.addWidget(QLabel(lang.t("tab_graphics")))
 
 			else:
 				for i, gpu in enumerate(gpus):
 
-					# =========================
-					# GPU CARD
-					# =========================
 					card = QGroupBox(f"GPU {i}: {gpu.name}")
 					card.setProperty("profile", True)
 
 					card_layout = QHBoxLayout()
 					info_layout = QGridLayout()
-
-					# =========================
-					# GPUtil DATA
-					# =========================
 					attrs = {
-						"Name": gpu.name,
+						lang.t("name"): gpu.name,
 						"UUID": gpu.uuid,
 						"GPU ID": gpu.id,
-						"Load (%)": round(gpu.load * 100, 2),
-						"Memory Total (MB)": gpu.memoryTotal,
-						"Memory Used (MB)": gpu.memoryUsed,
-						"Memory Free (MB)": gpu.memoryFree,
-						"Memory Utilization (%)": round(
+						lang.t("gpu_load"): round(gpu.load * 100, 2),
+						lang.t("gpu_memory_total"): gpu.memoryTotal,
+						lang.t("gpu_memory_used"): gpu.memoryUsed,
+						lang.t("gpu_memory_free"): gpu.memoryFree,
+						lang.t("gpu_memory_in_use"): round(
 							(gpu.memoryUsed / gpu.memoryTotal) * 100, 2
 						) if gpu.memoryTotal else "N/A",
-						"Temperature (°C)": gpu.temperature,
-						"Driver": getattr(gpu, "driver", "N/A"),
-						"Serial": getattr(gpu, "serial", "N/A"),
-						"Display Mode": getattr(gpu, "display_mode", "N/A"),
-						"Display Active": getattr(gpu, "display_active", "N/A"),
+						lang.t("temperacure"): gpu.temperature,
+						lang.t("driver"): getattr(gpu, "driver", "N/A"),
+						lang.t("display_active"): getattr(gpu, "display_active", "N/A"),
 					}
-
-					# =========================
-					# NVIDIA EXTRA DATA (NVML)
-					# =========================
 					if NVML_AVAILABLE:
 						try:
 							handle = pynvml.nvmlDeviceGetHandleByIndex(i)
@@ -1161,23 +1108,19 @@ class GraphicsTab(QWidget):
 							)
 
 							attrs.update({
-								"GPU Utilization (%)": util.gpu,
-								"Memory Controller (%)": util.memory,
-								"Power Usage (W)": round(power, 2),
-								"Power Limit (W)": round(power_limit, 2),
-								"Fan Speed (%)": fan,
-								"Graphics Clock (MHz)": clocks_graphics,
-								"Memory Clock (MHz)": clocks_mem,
-								"VRAM Used (MB)": round(mem.used / 1024**2),
-								"VRAM Free (MB)": round(mem.free / 1024**2),
+								lang.t("gpu_utilization"): util.gpu,
+								lang.t("memory_controller"): util.memory,
+								lang.t("power_usage"): round(power, 2),
+								lang.t("power_limit"): round(power_limit, 2),
+								lang.t("fan_speed"): fan,
+								lang.t("graph_clock"): clocks_graphics,
+								lang.t("memory_type_clock"): clocks_mem,
+								lang.t("vram_used"): round(mem.used / 1024**2),
+								lang.t("vram_free"): round(mem.free / 1024**2),
 							})
 
 						except Exception:
 							pass
-
-					# =========================
-					# ADD LABELS
-					# =========================
 					row = 0
 					for key, value in attrs.items():
 						label_widget = QLabel(f"{key}:")
@@ -1193,9 +1136,6 @@ class GraphicsTab(QWidget):
 
 					card_layout.addLayout(info_layout)
 
-					# =========================
-					# IMAGE FRAME (PROFILE STYLE)
-					# =========================
 					frame = QFrame()
 					frame.setFixedSize(130, 130)
 					frame.setProperty("profile", True)
@@ -1250,10 +1190,6 @@ class GraphicsTab(QWidget):
 		layout.addStretch()
 		self.setLayout(layout)
 
-
-# =========================
-# GRAPH WIDGET (Task Manager style)
-# =========================
 class UsageGraph(QWidget):
 	def __init__(self, max_points=120):
 		super().__init__()
@@ -1263,7 +1199,7 @@ class UsageGraph(QWidget):
 	def add_value(self, value):
 		self.data.append(value)
 		self.update()
-	# ⭐ ADICIONE ISTO
+
 	def reset(self):
 		self.data.clear()
 		self.update()
@@ -1271,7 +1207,6 @@ class UsageGraph(QWidget):
 	def paintEvent(self, event):
 		painter = QPainter(self)
 		painter.fillRect(self.rect(), QColor(theme.background()))
-
 		pen = QPen(QColor(theme.accent))
 		pen.setWidth(2)
 		painter.setPen(pen)
@@ -1293,64 +1228,45 @@ class UsageGraph(QWidget):
 
 			painter.drawLine(int(x1), int(y1), int(x2), int(y2))
 
-
-# =========================
-# PERFORMANCE TAB
-# =========================
-# =========================
-# PERFORMANCE TAB
-# =========================
 class BenchTab(QWidget):
 	def __init__(self):
 		super().__init__()
 
 		main_layout = QHBoxLayout()
 
-		# ================= LEFT PANEL =================
 		self.side_list = QListWidget()
 		self.side_list.setFixedWidth(180)
 		self.side_list.addItems([
 			"CPU",
-			"Memory",
-			"Disk",
+			lang.t("memory"),
+			lang.t("disk"),
 			"GPU"
 		])
 
 		self.side_list.currentRowChanged.connect(self.change_device)
 
 		main_layout.addWidget(self.side_list)
-
-		# ================= RIGHT AREA =================
-		right_layout = QVBoxLayout()
-
-		self.title = QLabel("CPU")
-		self.title.setStyleSheet("font-size:22px;font-weight:bold;")
-
+		self.title      = QLabel("CPU")
+		self.graph      = UsageGraph()
+		right_layout    = QVBoxLayout()
 		self.info_label = AccentLabel("")
 		self.info_label.setStyleSheet("font-size:14px;")
-
-		self.graph = UsageGraph()
+		self.title.setStyleSheet("font-size:22px;font-weight:bold;")
 
 		right_layout.addWidget(self.title)
-		right_layout.addWidget(self.info_label)
 		right_layout.addWidget(self.graph)
-
+		right_layout.addWidget(self.info_label)
 		main_layout.addLayout(right_layout)
 		self.setLayout(main_layout)
 
-		# DEVICE ATUAL
 		self.current_device = "CPU"
 
-		# TIMER UPDATE
 		self.timer = QTimer()
 		self.timer.timeout.connect(self.update_usage)
 		self.timer.start(1000)
 
 		self.side_list.setCurrentRow(0)
 
-	# =====================================================
-	# TROCA DE ITEM
-	# =====================================================
 	def change_device(self, index):
 		devices = ["CPU", "Memory", "Disk", "GPU"]
 
@@ -1367,9 +1283,6 @@ class BenchTab(QWidget):
 		# atualiza info instantaneamente
 		self.update_usage()
 
-	# =====================================================
-	# UPDATE DINÂMICO
-	# =====================================================
 	def update_usage(self):
 
 		if self.current_device == "CPU":
@@ -1397,13 +1310,13 @@ class BenchTab(QWidget):
 				gpus = GPUtil.getGPUs()
 				if gpus:
 					value = int(gpus[0].load * 100)
-					self.info_label.setText(f"GPU Load: {value}%")
+					self.info_label.setText(lang.t("gpu_load_percent").format(value))
 				else:
 					value = 0
-					self.info_label.setText("No GPU detected")
+					self.info_label.setText(lang.t("no_gpu"))
 			except:
 				value = 0
-				self.info_label.setText("GPU unavailable")
+				self.info_label.setText(lang.t("no_gpu2"))
 
 		else:
 			value = 0
@@ -1411,9 +1324,6 @@ class BenchTab(QWidget):
 		# adiciona valor no gráfico
 		self.graph.add_value(value)
 
-# =========================
-# SETTINGS TAB
-# =========================
 class SettingsTab(QWidget):
 	def __init__(self, app_reference):
 		super().__init__()
@@ -1474,30 +1384,21 @@ class AboutTab(QWidget):
 		self.app_reference = app_reference
 		self.contributors = []
 
-		# ==================================================
-		# ROOT LAYOUT (VERTICAL)
-		# ==================================================
 		root_layout = QVBoxLayout()
 		root_layout.setSpacing(0)
 		root_layout.setContentsMargins(0, 0, 0, 0)
 
-		# ==================================================
-		# MAIN CONTENT (HORIZONTAL)
-		# ==================================================
 		main_layout = QHBoxLayout()
 		main_layout.setSpacing(20)
 		main_layout.setContentsMargins(20, 20, 20, 20)
 
-		# ==================================================
-		# LEFT CARD — CONTRIBUTORS
-		# ==================================================
 		left_card = QFrame()
 		left_card.setMinimumWidth(350)
 		left_card.setProperty("profile", True)
 
 		left_layout = QVBoxLayout()
 
-		title = QLabel("Contributors")
+		title = QLabel(lang.t("contribuitors"))
 		title.setStyleSheet(
 			"color:white;font-size:18px;font-weight:bold;border:none;"
 		)
@@ -1523,9 +1424,6 @@ class AboutTab(QWidget):
 		left_layout.addWidget(self.contrib_list)
 		left_card.setLayout(left_layout)
 
-		# ==================================================
-		# RIGHT CARD — PROFILE
-		# ==================================================
 		right_card = QFrame()
 		right_card.setMaximumWidth(420)
 		right_card.setProperty("profile", True)
@@ -1600,9 +1498,6 @@ class AboutTab(QWidget):
 		main_layout.addWidget(left_card, 2)
 		main_layout.addWidget(right_card, 1)
 
-		# ==================================================
-		# FOOTER BAR
-		# ==================================================
 		footer = QFrame()
 		footer.setFixedHeight(32)
 		footer.setStyleSheet("""
@@ -1628,9 +1523,6 @@ class AboutTab(QWidget):
 		footer_layout.addWidget(self.footer_label)
 		footer.setLayout(footer_layout)
 
-		# ==================================================
-		# FINAL LAYOUT BUILD
-		# ==================================================
 		root_layout.addLayout(main_layout)
 		root_layout.addWidget(footer)
 
@@ -1644,9 +1536,6 @@ class AboutTab(QWidget):
 		# LOAD DATA
 		self.load_contributors()
 
-	# ==================================================
-	# LOAD JSON
-	# ==================================================
 	def load_contributors(self):
 		try:
 			with open("files/contributors.json", "r", encoding="utf-8") as f:
@@ -1664,9 +1553,6 @@ class AboutTab(QWidget):
 		except Exception as e:
 			print("contributors.json error:", e)
 
-	# ==================================================
-	# UPDATE PROFILE
-	# ==================================================
 	def update_profile(self, index):
 
 		if index < 0 or index >= len(self.contributors):
